@@ -1,0 +1,182 @@
+unit frmTgamEST_u;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
+  Vcl.Imaging.pngimage, Vcl.Imaging.jpeg;
+
+type
+  TForm4 = class(TForm)
+    EnemyTimer: TTimer;
+    LevelTimer: TTimer;
+    Level: TLabel;
+    Score: TLabel;
+    ScoreTimer: TTimer;
+    HighScore: TLabel;
+    Enemy: TImage;
+    Player: TImage;
+    GameImage: TImage;
+    Path: TLabel;
+    HUD: TImage;
+    Start: TImage;
+    Obstacle1: TImage;
+    Obstacle2: TImage;
+    Obstacle3: TImage;
+    procedure EnemyTimerTimer(Sender: TObject);
+    procedure LevelTimerTimer(Sender: TObject);
+    procedure ScoreTimerTimer(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure GameImageMouseMove(Sender: TObject; Shift: TShiftState;
+      X, Y: Integer);
+    procedure StartClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form4: TForm4;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm4.EnemyTimerTimer(Sender: TObject);
+var
+  overlay: TRect;
+  SlowDown: Integer;
+begin
+  SlowDown := 1000;
+  if IntersectRect(overlay, Enemy.BoundsRect, Obstacle1.BoundsRect) or
+    IntersectRect(overlay, Enemy.BoundsRect, Obstacle2.BoundsRect) or
+    IntersectRect(overlay, Enemy.BoundsRect, Obstacle3.BoundsRect) then
+  begin
+    SlowDown := Level.tag - 1000;
+  end;
+  if Enemy.left < Player.left then
+    Enemy.left := Enemy.left + Level.tag;
+  if Enemy.left > Player.left then
+    Enemy.left := Enemy.left - Level.tag;
+  if Enemy.top > Player.top then
+    Enemy.top := Enemy.top - Level.tag;
+  if Enemy.top < Player.top then
+    Enemy.top := Enemy.top + Level.tag;
+
+  if IntersectRect(overlay, Player.BoundsRect, Enemy.BoundsRect) then
+  begin
+    EnemyTimer.enabled := false;
+    LevelTimer.enabled := false;
+    ScoreTimer.enabled := false;
+
+    GameImage.Picture.LoadFromFile(Path.Caption + 'INTRO.jpeg');
+    HUD.Picture.LoadFromFile(Path.Caption + 'GameOver.jpeg');
+
+    Enemy.Visible := false;
+    Player.Visible := false;
+    Obstacle1.Visible := false;
+    Obstacle2.Visible := false;
+    obstacle3.visible := false;
+
+    if Score.tag > HighScore.tag then
+    begin
+      HighScore.tag := Score.tag;
+      HighScore.Caption := IntToStr(HighScore.tag);
+      GameImage.Picture.LoadFromFile(Path.Caption + 'Score-GameOver.jpg');
+    end
+    else
+      GameImage.Picture.LoadFromFile(Path.Caption + 'GAMEOVER.jpg');
+    HUD.Picture.LoadFromFile(Path.Caption + 'GameOver.jpeg');
+    Start.enabled := true;
+  end;
+end;
+
+procedure TForm4.FormCreate(Sender: TObject);
+begin
+  Path.Caption := ExtractFilePath(Application.ExeName);
+  GameImage.Picture.LoadFromFile(Path.Caption + 'INTRO.jpeg');
+  HUD.Picture.LoadFromFile(Path.Caption + 'INTRODOWN.jpeg');
+end;
+
+procedure TForm4.GameImageMouseMove(Sender: TObject; Shift: TShiftState;
+  X, Y: Integer);
+begin
+  if EnemyTimer.enabled = true then
+  begin
+    Player.left := X - Player.width div 2;
+    Player.top := Y - Player.Height div 2;
+  end;
+
+end;
+
+procedure TForm4.LevelTimerTimer(Sender: TObject);
+begin
+
+  Level.tag := Level.tag + 1;
+  Level.Caption := IntToStr(Level.tag);
+
+  if Level.tag mod 2 = 1 then
+  begin
+    GameImage.tag := GameImage.tag + 1;
+    if GameImage.tag > 4 then
+      GameImage.tag := 1;
+    GameImage.Picture.LoadFromFile(Path.Caption + 'BG' + IntToStr(GameImage.tag)
+      + '.jpeg');
+  end;
+
+end;
+
+procedure TForm4.ScoreTimerTimer(Sender: TObject);
+begin
+  Score.tag := Score.tag + Level.tag * 8;
+  Score.Caption := IntToStr(Score.tag);
+end;
+
+procedure TForm4.StartClick(Sender: TObject);
+begin
+  Start.enabled := false;
+
+  GameImage.Picture.LoadFromFile(Path.Caption + 'BG1.jpeg');
+  HUD.Picture.LoadFromFile(Path.Caption + 'WhilePlay.jpeg');
+  GameImage.tag := 1;
+
+  Enemy.left := 9;
+  Enemy.top := 9;
+  Enemy.Visible := true;
+
+  Player.left := 456;
+  Player.top := 291;
+  Player.Visible := true;
+
+  Level.tag := 1;
+  Level.Caption := '1';
+  Level.Visible := true;
+
+  Score.tag := 0;
+  Score.Caption := '0';
+  Score.Visible := true;
+
+  HighScore.Visible := true;
+
+  Obstacle1.left := 230;
+  Obstacle1.top := 130;
+  Obstacle1.Visible := true;
+
+  Obstacle2.left := 150;
+  Obstacle2.top := 270;
+  Obstacle2.Visible := true;
+
+  obstacle3.left := 186;
+  obstacle3.top := 201;
+  obstacle3.visible := true;
+
+  EnemyTimer.enabled := true;
+  LevelTimer.enabled := true;
+  ScoreTimer.enabled := true;
+
+end;
+
+end.
